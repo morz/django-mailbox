@@ -179,6 +179,14 @@ class Mailbox(models.Model):
             return None
         return folder[0]
 
+    @property
+    def searching(self):
+        """Returns (if specified) the folder to fetch mail from."""
+        searching = self._query_string.get('searching', 'ALL')
+        if not searching:
+            return None
+        return searching[0]
+
     def get_connection(self):
         """Returns the transport instance for this mailbox.
 
@@ -195,7 +203,8 @@ class Mailbox(models.Model):
                 ssl=self.use_ssl,
                 tls=self.use_tls,
                 archive=self.archive,
-                folder=self.folder
+                folder=self.folder,
+                search=self.searching
             )
             conn.connect(self.username, self.password)
         elif self.type == 'gmail':

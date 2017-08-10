@@ -91,6 +91,15 @@ after processing, add ``?archive=myarchivefolder`` to the end of the URI::
 
     imap+ssl://youremailaddress%40gmail.com:1234@imap.gmail.com?archive=myarchivefolder
 
+Specifying the search message type
+++++++++++++++++++++++++++++
+
+Default, Django Mailbox searching all messages in folder.
+If you want searching not reading messages you could add ``?searching=UNSEEN``
+to the end of your URI::
+
+    imap+ssl://youremailaddress%40gmail.com:1234@imap.gmail.com?folder=UNSEEN
+
 .. _gmail-oauth:
 
 Gmail IMAP with Oauth2 authentication

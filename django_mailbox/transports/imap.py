@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ImapTransport(EmailTransport):
     def __init__(
         self, hostname, port=None, ssl=False, tls=False,
-        archive='', folder=None,
+        archive='', folder=None, search='ALL'
     ):
         self.max_message_size = getattr(
             settings,
@@ -36,6 +36,7 @@ class ImapTransport(EmailTransport):
         self.archive = archive
         self.folder = folder
         self.tls = tls
+        self.searching = search
         if ssl:
             self.transport = imaplib.IMAP4_SSL
             if not self.port:
@@ -58,7 +59,7 @@ class ImapTransport(EmailTransport):
 
     def _get_all_message_ids(self):
         # Fetch all the message uids
-        response, message_ids = self.server.uid('search', None, 'ALL')
+        response, message_ids = self.server.uid('search', None, self.searching)
         message_id_string = message_ids[0].strip()
         # Usually `message_id_string` will be a list of space-separated
         # ids; we must make sure that it isn't an empty string before
@@ -132,6 +133,9 @@ class ImapTransport(EmailTransport):
             if self.archive:
                 self.server.uid('copy', uid, self.archive)
 
-            self.server.uid('store', uid, "+FLAGS", "(\\Deleted)")
+            if self.searching != 'ALL':
+                self.server.uid('store', uid, "+FLAGS", "(\\Seen)")
+            else:
+                self.server.uid('store', uid, "+FLAGS", "(\\Deleted)")
         self.server.expunge()
         return
