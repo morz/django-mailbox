@@ -254,6 +254,15 @@ class Mailbox(models.Model):
         msg.outgoing = True
         msg.save()
         return msg
+    
+    def record_draft_message(self, message, in_msg = None):
+        """Record an outgoing draft associated with this mailbox."""
+        msg = self._process_message(message, in_msg)
+        if msg is None:
+            return None
+        msg.outgoing = True
+        msg.save()
+        return msg
 
     def _get_dehydrated_message(self, msg, record):
         settings = utils.get_settings()
