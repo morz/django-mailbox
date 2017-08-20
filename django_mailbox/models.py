@@ -361,8 +361,8 @@ class Mailbox(models.Model):
             new = msg
         return new
 
-    def _process_message(self, message):
-        msg = Message()
+    def _process_message(self, message, msg=None):
+        msg = msg and msg or Message()
         settings = utils.get_settings()
 
         if settings['store_original_message']:
