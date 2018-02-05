@@ -182,7 +182,7 @@ class Mailbox(models.Model):
     @property
     def searching(self):
         """Returns (if specified) the folder to fetch mail from."""
-        searching = self._query_string.get('searching', 'ALL')
+        searching = self._query_string.get('searching', None)
         if not searching:
             return None
         return searching[0]
@@ -428,7 +428,11 @@ class Mailbox(models.Model):
         if not connection:
             return new_mail
         for message in connection.get_message(condition):
-            msg = self.process_incoming_message(message)
+            # if username find in message headers - it's outgoing message
+            if self.username in utils.convert_header_to_unicode(message['from']):
+                msg = self.record_outgoing_message(message)
+            else:
+                msg = self.process_incoming_message(message)
             if not msg is None:
                 new_mail.append(msg)
         self.last_polling = now()

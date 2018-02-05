@@ -1,5 +1,6 @@
 import imaplib
 import logging
+import sys
 
 from django.conf import settings
 
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ImapTransport(EmailTransport):
     def __init__(
         self, hostname, port=None, ssl=False, tls=False,
-        archive='', folder=None, search='ALL'
+        archive='', folder=None, search=None
     ):
         self.max_message_size = getattr(
             settings,
@@ -36,7 +37,7 @@ class ImapTransport(EmailTransport):
         self.archive = archive
         self.folder = folder
         self.tls = tls
-        self.searching = search
+        self.searching = search and search or "ALL"
         if ssl:
             self.transport = imaplib.IMAP4_SSL
             if not self.port:
@@ -51,11 +52,6 @@ class ImapTransport(EmailTransport):
         if self.tls:
             self.server.starttls()
         typ, msg = self.server.login(username, password)
-
-        if self.folder:
-            self.server.select(self.folder)
-        else:
-            self.server.select()
 
     def _get_all_message_ids(self):
         # Fetch all the message uids
@@ -95,6 +91,41 @@ class ImapTransport(EmailTransport):
         return safe_message_ids
 
     def get_message(self, condition=None):
+        if self.folder:
+            self.folder = self.folder.split(',')
+            if len(self.folder) > 1 or self.folder[0] == 'ALL':
+                t, folders = self.server.list()
+                exclude = [l.replace('!', '') for l in self.folder if str(l).startswith('!')]
+
+                for folder in folders:
+                    folder = folder.decode().replace('\"', '').replace(' ', '').split('/')[1]
+                    if folder not in exclude:
+                        self.server.select(folder)
+                        if sys.version_info >= (3, 3):
+                            yield from self._get_message(condition, folder)
+                        else:
+                            for message in self._get_message(condition, folder):
+                                yield message
+
+            else:
+                self.server.select(self.folder[0])
+                if sys.version_info >= (3, 3):
+                    yield from self._get_message(condition, folder)
+                else:
+                    for message in self._get_message(condition, folder):
+                        yield message
+        else:
+            self.server.select()
+            if sys.version_info >= (3, 3):
+                yield from self._get_message(condition, folder)
+            else:
+                for message in self._get_message(condition, folder):
+                    yield message
+
+        self.server.expunge()
+        return
+
+    def _get_message(self, condition, folder):
         message_ids = self._get_all_message_ids()
 
         if not message_ids:
@@ -117,6 +148,8 @@ class ImapTransport(EmailTransport):
                     continue
                 try:
                     message = self.get_email_from_bytes(msg_contents[0][1])
+                    if folder in ['Sent', 'Out']:
+                        message['Out'] = 'YES'
                 except TypeError:
                     # This happens if another thread/process deletes the
                     # message between our generating the ID list and our
@@ -136,6 +169,4 @@ class ImapTransport(EmailTransport):
             if self.searching != 'ALL':
                 self.server.uid('store', uid, "+FLAGS", "(\\Seen)")
             else:
-                self.server.uid('store', uid, "+FLAGS", "(\\Deleted)")
-        self.server.expunge()
-        return
+                self.server.uid('store', uid, "+FLAGS", "(\\Seen)")  # old: \\Deleted

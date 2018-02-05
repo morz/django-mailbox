@@ -76,6 +76,22 @@ to the end of your URI::
 
     imap+ssl://youremailaddress%40gmail.com:1234@imap.gmail.com?folder=MyFolder
 
+Also, this parameter supports multiple values. To do this, you need to list
+the required folders separated by commas; for example, to instead
+consume from the folders named 'Sent', 'INBOX', 'Spam', you could add ``?folder=Sent,INBOX,Spam``
+to the end of your URI::
+
+    imap+ssl://youremailaddress%40gmail.com:1234@imap.gmail.com?folder=Sent,INBOX,Spam
+
+Also, you can select all the folders on the server. To do this, select the folder "ALL": ``?folder=ALL``
+
+Also, you can exclude some folders from the selection.
+To do this, you must specify the sign ``!`` in front of the folder name; for example, you if want select all folders
+on server, but want exclude 'Spam' folder, you could add ``?folder=ALL,!Spam`` to the end of your URI::
+
+    imap+ssl://youremailaddress%40gmail.com:1234@imap.gmail.com?folder=ALL,!Spam
+
+
 Specifying an archive folder
 ++++++++++++++++++++++++++++
 

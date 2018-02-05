@@ -21,7 +21,8 @@ class Command(BaseCommand):
                 'Gathering messages for %s',
                 mailbox.name
             )
-            messages = mailbox.get_new_mail()
+            emsg = mailbox.messages.values_list('message_id', flat=True)
+            messages = mailbox.get_new_mail(lambda m: m['message-id'][0:255].strip() not in list(emsg))
             for message in messages:
                 logger.info(
                     'Received %s (from %s)',
