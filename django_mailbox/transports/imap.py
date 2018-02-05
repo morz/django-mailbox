@@ -110,16 +110,16 @@ class ImapTransport(EmailTransport):
             else:
                 self.server.select(self.folder[0])
                 if sys.version_info >= (3, 3):
-                    yield from self._get_message(condition, folder)
+                    yield from self._get_message(condition, self.folder[0])
                 else:
-                    for message in self._get_message(condition, folder):
+                    for message in self._get_message(condition, self.folder[0]):
                         yield message
         else:
             self.server.select()
             if sys.version_info >= (3, 3):
-                yield from self._get_message(condition, folder)
+                yield from self._get_message(condition, 'INBOX')
             else:
-                for message in self._get_message(condition, folder):
+                for message in self._get_message(condition, 'INBOX'):
                     yield message
 
         self.server.expunge()
