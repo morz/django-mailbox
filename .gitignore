@@ -13,3 +13,4 @@ dummy_project/*
 .tox/
 messages
 .idea/
+/django_mailbox/tests/messages/

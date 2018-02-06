@@ -37,7 +37,7 @@ class ImapTransport(EmailTransport):
         self.tls = tls
         self.searching = search and search or "ALL"
         self.mailbox = mailbox
-        self.mailbox_messages = None
+        self.mailbox_messages = []
         if ssl:
             self.transport = imaplib.IMAP4_SSL
             if not self.port:
