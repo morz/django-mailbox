@@ -204,7 +204,8 @@ class Mailbox(models.Model):
                 tls=self.use_tls,
                 archive=self.archive,
                 folder=self.folder,
-                search=self.searching
+                search=self.searching,
+                mailbox=self
             )
             conn.connect(self.username, self.password)
         elif self.type == 'gmail':
@@ -254,8 +255,8 @@ class Mailbox(models.Model):
         msg.outgoing = True
         msg.save()
         return msg
-    
-    def record_draft_message(self, message, in_msg = None):
+
+    def record_draft_message(self, message, in_msg=None):
         """Record an outgoing draft associated with this mailbox."""
         msg = self._process_message(message, in_msg)
         if msg is None:
@@ -374,6 +375,8 @@ class Mailbox(models.Model):
             )
         if 'message-id' in message:
             msg.message_id = message['message-id'][0:255].strip()
+        if 'UID' in message:
+            msg.uid = message['UID']
         if 'from' in message:
             msg.from_header = utils.convert_header_to_unicode(message['from'])
         if 'to' in message:
@@ -389,7 +392,7 @@ class Mailbox(models.Model):
         except KeyError as exc:
             # email.message.replace_header may raise 'KeyError' if the header
             # 'content-transfer-encoding' is missing
-            logger.warning("Failed to parse message: %s", exc,)
+            logger.warning("Failed to parse message: %s", exc, )
             return None
         msg.set_body(body)
         if message['in-reply-to']:
@@ -409,7 +412,7 @@ class Mailbox(models.Model):
                 with gzip.GzipFile(fileobj=fp_tmp, mode="w") as fp:
                     fp.write(message.as_string().encode('utf-8'))
                 msg.eml.save(
-                    "%s.eml.gz" % (uuid.uuid4(), ),
+                    "%s.eml.gz" % (uuid.uuid4(),),
                     File(fp_tmp),
                     save=False
                 )
@@ -483,6 +486,12 @@ class Message(models.Model):
     subject = models.CharField(
         _(u'Subject'),
         max_length=255
+    )
+    uid = models.CharField(
+        _(u'UID'),
+        max_length=255,
+        blank=True,
+        null=True
     )
 
     message_id = models.CharField(
@@ -678,9 +687,9 @@ class Message(models.Model):
                     encode_base64(new)
             except MessageAttachment.DoesNotExist:
                 new[settings['altered_message_header']] = (
-                    'Missing; Attachment %s not found' % (
-                        msg[settings['attachment_interpolation_header']]
-                    )
+                        'Missing; Attachment %s not found' % (
+                    msg[settings['attachment_interpolation_header']]
+                )
                 )
                 new.set_payload('')
         else:
