@@ -51,7 +51,7 @@ class ImapTransport(EmailTransport):
         self.server = self.transport(self.hostname, self.port)
         if self.tls:
             self.server.starttls()
-        typ, msg = self.server.login(username, password)
+        self.server.login(username, password)
         self.mailbox_messages = self.mailbox and self.mailbox.messages.values('message_id', 'uid') or []
 
     def _get_all_message_ids(self):
