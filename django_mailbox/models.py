@@ -364,6 +364,8 @@ class Mailbox(models.Model):
 
     def _process_message(self, message, msg=None):
         msg = msg and msg or Message()
+        msg._email_object = message
+
         settings = utils.get_settings()
 
         if settings['store_original_message']:
@@ -429,7 +431,7 @@ class Mailbox(models.Model):
         new_mail = []
         connection = self.get_connection()
         if not connection:
-            return new_mail
+            return
         for message in connection.get_message(condition):
             # if username find in message headers - it's outgoing message
             if self.username in utils.convert_header_to_unicode(message['from']):
@@ -437,13 +439,12 @@ class Mailbox(models.Model):
             else:
                 msg = self.process_incoming_message(message)
             if not msg is None:
-                new_mail.append(msg)
+                yield msg
         self.last_polling = now()
         if django.VERSION >= (1, 5):  # Django 1.5 introduces update_fields
             self.save(update_fields=['last_polling'])
         else:
             self.save()
-        return new_mail
 
     def __str__(self):
         return self.name
@@ -743,20 +744,22 @@ class Message(models.Model):
            (https://docs.python.org/2/library/email.message.html)
 
         """
-        if self.eml:
-            if self.eml.name.endswith('.gz'):
-                body = gzip.GzipFile(fileobj=self.eml).read()
+        if not hasattr(self, '_email_object'):  # Cache fill
+            if self.eml:
+                if self.eml.name.endswith('.gz'):
+                    body = gzip.GzipFile(fileobj=self.eml).read()
+                else:
+                    self.eml.open()
+                    body = self.eml.file.read()
+                    self.eml.close()
             else:
-                self.eml.open()
-                body = self.eml.file.read()
-                self.eml.close()
-        else:
-            body = self.get_body()
-        if six.PY3:
-            flat = email.message_from_bytes(body)
-        else:
-            flat = email.message_from_string(body)
-        return self._rehydrate(flat)
+                body = self.get_body()
+            if six.PY3:
+                flat = email.message_from_bytes(body)
+            else:
+                flat = email.message_from_string(body)
+            self._email_object = self._rehydrate(flat)
+        return self._email_object
 
     def delete(self, *args, **kwargs):
         """Delete this message and all stored attachments."""
