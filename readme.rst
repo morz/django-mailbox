@@ -11,7 +11,7 @@ What's new?
 
 TODO:
 =============
-# sync only not getted mails from acoount
+* download only not getted mails from account
 
 Easily ingest messages from POP3, IMAP, or local mailboxes into your Django application.
 
