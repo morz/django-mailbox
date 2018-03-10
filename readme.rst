@@ -9,6 +9,9 @@ What's new?
 * Add function ``record_draft_message`` for creating draft of messages `04eafae <https://github.com/morz/django-mailbox/commit/04eafae747a3e40d4756a6f1322ce6b320efda2e>`_.
 * added searching parameter for imap connection. `b814d66 <https://github.com/morz/django-mailbox/commit/b814d66c6dc865b46cca500ba8f079a17c42bf17#diff-61b7ed68b4a7074b1ee53c624772fa90>`_.
 
+TODO:
+=============
+# sync only not getted mails from acoount
 
 Easily ingest messages from POP3, IMAP, or local mailboxes into your Django application.
 
