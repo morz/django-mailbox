@@ -1,5 +1,6 @@
 import imaplib
 import logging
+import re
 import sys
 
 from django.conf import settings
@@ -177,3 +178,10 @@ class ImapTransport(EmailTransport):
                 self.server.uid('copy', uid, self.archive)
 
             self.server.uid('store', uid, "+FLAGS", "(\\Seen)")  # old: \\Deleted
+
+    def save_message(self, folder, message):
+        rettype, data = self.server.append(folder, '', None, message)
+        response = data[0].decode()
+        pattern = re.compile(r"\d[0-9]+", re.S | re.I)
+        result = pattern.findall(response)
+        return result[1]
