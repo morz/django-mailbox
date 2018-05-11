@@ -31,6 +31,7 @@ class EmailMessageTestCase(TestCase):
     ALLOWED_EXTRA_HEADERS = [
         'MIME-Version',
         'Content-Transfer-Encoding',
+        'UID'
     ]
 
     def setUp(self):
