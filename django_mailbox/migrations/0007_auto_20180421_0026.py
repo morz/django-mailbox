@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_mailbox', '0006_mailbox_last_polling'),
+        ('django_mailbox', '0008_message_uid'),
     ]
 
     operations = [
